@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package grpc.gomaluum_auth.unaryecho;
+package grpc.gas.unaryecho;
 
 // EchoRequest is the request for echo.
 message EchoRequest {
