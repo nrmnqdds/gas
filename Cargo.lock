@@ -500,6 +500,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "gas"
+version = "0.1.0"
+dependencies = [
+ "console",
+ "cookie_store",
+ "env_logger",
+ "log",
+ "once_cell",
+ "prost",
+ "reqwest",
+ "thiserror",
+ "tokio",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
+ "url",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -520,25 +539,6 @@ dependencies = [
  "libc",
  "r-efi",
  "wasip2",
-]
-
-[[package]]
-name = "gomaluum-auth"
-version = "0.1.0"
-dependencies = [
- "console",
- "cookie_store",
- "env_logger",
- "log",
- "once_cell",
- "prost",
- "reqwest",
- "thiserror",
- "tokio",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
- "url",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 pub mod pb {
-    tonic::include_proto!("grpc.gomaluum_auth.unaryecho");
+    tonic::include_proto!("grpc.gas.unaryecho");
 }
 
 use pb::{EchoRequest, EchoResponse};
