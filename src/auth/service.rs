@@ -6,7 +6,6 @@
 use log::{error, info, warn};
 use reqwest::Client;
 use std::collections::HashMap;
-use url::Url;
 
 use crate::{
     auth::{
@@ -15,7 +14,7 @@ use crate::{
         },
         errors::*,
     },
-    http::client::{create_client_with_cookies, set_common_headers},
+    http::client::{create_client_with_cookies},
 };
 
 /// Authentication service for handling i-Ma'luum login operations
@@ -58,10 +57,10 @@ impl AuthService {
         let form_data = self.create_form_data(&username, &password);
 
         // Execute the two-step authentication flow
-        self.perform_authentication(&client, form_data).await?;
+        let location = self.perform_authentication(&client, form_data).await?;
 
         // Extract authentication token from cookies
-        let token = self.extract_auth_token(&client).await?;
+        let token = self.extract_auth_token(&client, location).await?;
 
         info!("Login successful for user: {}", username);
         Ok((token, username, password))
@@ -87,7 +86,7 @@ impl AuthService {
         &self,
         client: &Client,
         form_data: HashMap<&str, String>,
-    ) -> AuthResult<()> {
+    ) -> AuthResult<String> {
         // First request: GET to initialize session and obtain cookies
         info!("=== STEP 1: GET REQUEST TO CAS ===");
         info!("Request URL: {}", IMALUUM_PAGE);
@@ -108,7 +107,7 @@ impl AuthService {
 
         let first_status = first_response.status();
         let first_headers = first_response.headers().clone();
-        let first_cookies: Vec<_> = first_response.cookies().collect();
+        let _: Vec<_> = first_response.cookies().collect();
 
         info!("--- FIRST RESPONSE ---");
         info!("Response Headers:");
@@ -179,6 +178,12 @@ impl AuthService {
             info!("  {}: {:?}", name, value);
         }
 
+        // get location header
+        let location = match second_headers.get("location") {
+            Some(header_value) => header_value.to_str().unwrap_or(""),
+            None => return Err(AuthError::LoginFailed),
+        };
+
         // Read the response body to ensure cookies are set
         let response_body = second_response.text().await.map_err(|e| {
             error!("Failed to read second response body: {}", e);
@@ -203,18 +208,11 @@ impl AuthService {
         }
 
         info!("=== AUTHENTICATION FLOW COMPLETED ===\n");
-        Ok(())
+        Ok(location.to_string())
     }
 
     /// Extracts the MOD_AUTH_CAS authentication token from cookies
-    async fn extract_auth_token(&self, client: &Client) -> AuthResult<String> {
-        // Make a request to get cookies from the client's cookie store
-        // The cookie store in reqwest automatically includes cookies in requests
-        let url = Url::parse(IMALUUM_PAGE).map_err(|e| {
-            error!("Failed to parse base URL: {}", e);
-            AuthError::URLParseFailed(e)
-        })?;
-
+    async fn extract_auth_token(&self, client: &Client, url: String) -> AuthResult<String> {
         let response = client.get(url).send().await.map_err(|e| {
             error!("Failed to get cookies from base URL: {}", e);
             AuthError::RequestFailed(e)
