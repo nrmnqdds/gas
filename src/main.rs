@@ -13,18 +13,22 @@ use crate::auth::grpc::auth_proto::auth_server::AuthServer;
 use crate::middleware::pb::echo_server::EchoServer as EchoService;
 use crate::middleware::{EchoServer, check_auth};
 use console::Style;
+use dotenvy::dotenv;
 use log::{error, info};
 use std::env;
 use tonic::transport::Server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Load environment variables from .env file
+    dotenv().ok();
+
     // Initialize logger
     env_logger::init();
 
     // Get bind address from environment or use default
     let addr = env::var("BIND_ADDR")
-        .unwrap_or_else(|_| "[::1]:50052".to_string())
+        .unwrap_or_else(|_| "0.0.0.0:50052".to_string())
         .parse()?;
 
     // Create gRPC servers

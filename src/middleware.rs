@@ -2,6 +2,7 @@ pub mod pb {
     tonic::include_proto!("grpc.gas.unaryecho");
 }
 
+use log::info;
 use pb::{EchoRequest, EchoResponse};
 use tonic::{Request, Response, Status, metadata::MetadataValue};
 
@@ -20,6 +21,14 @@ impl pb::echo_server::Echo for EchoServer {
 
 pub fn check_auth(req: Request<()>) -> Result<Request<()>, Status> {
     let secret_token = std::env::var("GOMALUUM_AUTH_TOKEN");
+
+    info!(
+        "Secret token: {}",
+        match &secret_token {
+            Ok(t) => t,
+            Err(_) => "Not Set",
+        }
+    );
 
     if secret_token.is_err() {
         return Err(Status::internal(

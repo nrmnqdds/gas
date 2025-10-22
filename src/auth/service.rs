@@ -14,7 +14,7 @@ use crate::{
         },
         errors::*,
     },
-    http::client::{create_client_with_cookies},
+    http::client::create_client_with_cookies,
 };
 
 /// Authentication service for handling i-Ma'luum login operations
@@ -88,13 +88,10 @@ impl AuthService {
         form_data: HashMap<&str, String>,
     ) -> AuthResult<String> {
         // First request: GET to initialize session and obtain cookies
-        info!("=== STEP 1: GET REQUEST TO CAS ===");
-        info!("Request URL: {}", IMALUUM_PAGE);
 
         let _ = client.get(IMALUUM_PAGE);
         let first_request = client.get(IMALUUM_CAS_PAGE);
 
-        info!("Sending first GET request...");
         let first_response = first_request.send().await.map_err(|e| {
             error!("Failed to send first GET request to CAS: {:?}", e);
             error!(
@@ -106,14 +103,7 @@ impl AuthService {
         })?;
 
         let first_status = first_response.status();
-        let first_headers = first_response.headers().clone();
         let _: Vec<_> = first_response.cookies().collect();
-
-        info!("--- FIRST RESPONSE ---");
-        info!("Response Headers:");
-        for (name, value) in first_headers.iter() {
-            info!("  {}: {:?}", name, value);
-        }
 
         if !first_status.is_success() && !first_status.is_redirection() {
             warn!("First request returned unexpected status: {}", first_status);
@@ -121,23 +111,10 @@ impl AuthService {
 
         // Cookies are automatically stored in the client's cookie store
         // We must consume the response body to ensure cookies are properly saved
-        let first_body = first_response.text().await.map_err(|e| {
+        let _ = first_response.text().await.map_err(|e| {
             error!("Failed to read first response body: {}", e);
             AuthError::RequestFailed(e)
         })?;
-
-        info!("First Response Body Length: {} bytes", first_body.len());
-        info!(
-            "First Response Body Preview (first 500 chars):\n{}",
-            &first_body.chars().take(500).collect::<String>()
-        );
-
-        info!("\n=== STEP 2: POST REQUEST WITH CREDENTIALS ===");
-        info!("Request URL: {}", IMALUUM_LOGIN_PAGE);
-        info!("Form Data:");
-        for (key, value) in &form_data {
-            info!("  {}: {}", key, value);
-        }
 
         // Second request: POST with credentials
         // Add Referer header to mimic browser behavior
@@ -148,7 +125,6 @@ impl AuthService {
             .header("Origin", CAS_ROOT)
             .form(&form_data);
 
-        info!("Sending second POST request...");
         let second_response = second_request.send().await.map_err(|e| {
             error!(
                 "Failed to send second POST request with credentials: {:?}",
@@ -163,20 +139,7 @@ impl AuthService {
         })?;
 
         let second_status = second_response.status();
-        let second_url = second_response.url().clone();
         let second_headers = second_response.headers().clone();
-
-        info!("--- SECOND RESPONSE ---");
-        info!(
-            "Status: {} ({})",
-            second_status.as_u16(),
-            second_status.canonical_reason().unwrap_or("Unknown")
-        );
-        info!("Final URL: {}", second_url);
-        info!("Response Headers:");
-        for (name, value) in second_headers.iter() {
-            info!("  {}: {:?}", name, value);
-        }
 
         // get location header
         let location = match second_headers.get("location") {
@@ -190,12 +153,6 @@ impl AuthService {
             AuthError::RequestFailed(e)
         })?;
 
-        info!("Second Response Body Length: {} bytes", response_body.len());
-        info!(
-            "Second Response Body Preview (first 1000 chars):\n{}",
-            &response_body.chars().take(1000).collect::<String>()
-        );
-
         // Check if login was successful by looking for error indicators in the response
         if response_body.contains("Login failed") || response_body.contains("Invalid credentials") {
             error!("Login failed: Invalid credentials detected in response");
@@ -207,7 +164,6 @@ impl AuthService {
             return Err(AuthError::LoginFailed);
         }
 
-        info!("=== AUTHENTICATION FLOW COMPLETED ===\n");
         Ok(location.to_string())
     }
 
