@@ -61,7 +61,7 @@ The service exposes an `Auth` service with a `Login` method.
 ```protobuf
 syntax = "proto3";
 
-package grpc.gomaluum_auth.auth;
+package grpc.gas.auth;
 
 service Auth {
   rpc Login(LoginRequest) returns (LoginResponse) {};
