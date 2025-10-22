@@ -56,12 +56,13 @@ pub fn create_client_with_cookies() -> Client {
         .tcp_nodelay(true)
         .tcp_keepalive(Duration::from_secs(60))
         // Redirect policy - follow redirects automatically
-        .redirect(reqwest::redirect::Policy::limited(10))
+        .redirect(reqwest::redirect::Policy::none())
         // Disable HTTP/2 prior knowledge - let negotiation happen naturally
         .http1_only()
         // Danger: Accept invalid certificates (i-Ma'luum may have cert issues)
         // Remove this in production if certificates are valid
         .danger_accept_invalid_certs(false)
+        .default_headers(set_common_headers())
         .build()
         .expect("Failed to build HTTP client with cookies")
 }
@@ -69,19 +70,20 @@ pub fn create_client_with_cookies() -> Client {
 /// Sets common headers for i-Ma'luum requests
 ///
 /// These headers mimic a real browser to avoid being blocked by the server
-pub fn set_common_headers(builder: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
-    builder
-        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
-        .header("Accept-Language", "en-US,en;q=0.9")
-        .header("Accept-Encoding", "gzip, deflate, br")
-        .header("Cache-Control", "no-cache")
-        .header("Pragma", "no-cache")
-        .header("Upgrade-Insecure-Requests", "1")
-        .header("Sec-Fetch-Dest", "document")
-        .header("Sec-Fetch-Mode", "navigate")
-        .header("Sec-Fetch-Site", "none")
-        .header("Sec-Fetch-User", "?1")
+pub fn set_common_headers() -> reqwest::header::HeaderMap {
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36".parse().unwrap());
+    headers.insert("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7".parse().unwrap());
+    headers.insert("Accept-Language", "en-US,en;q=0.9".parse().unwrap());
+    headers.insert("Accept-Encoding", "gzip, deflate, br".parse().unwrap());
+    headers.insert("Cache-Control", "no-cache".parse().unwrap());
+    headers.insert("Pragma", "no-cache".parse().unwrap());
+    headers.insert("Upgrade-Insecure-Requests", "1".parse().unwrap());
+    headers.insert("Sec-Fetch-Dest", "document".parse().unwrap());
+    headers.insert("Sec-Fetch-Mode", "navigate".parse().unwrap());
+    headers.insert("Sec-Fetch-Site", "none".parse().unwrap());
+    headers.insert("Sec-Fetch-User", "?1".parse().unwrap());
+    headers
 }
 
 #[cfg(test)]
