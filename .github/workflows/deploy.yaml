@@ -43,5 +43,5 @@ jobs:
           script: |
             docker login ghcr.io -u nrmnqdds -p ${{ secrets.GHCR_TOKEN }}
             docker compose pull
-            docker compose up --force-recreate --build -d gas
+            docker compose up --force-recreate --build -d gas-grpc
             docker system prune -a -f
