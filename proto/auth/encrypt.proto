@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package grpc.gas.auth;
+
+service Encryption {
+  rpc Encrypt(EncryptRequest) returns (EncryptResponse) {};
+}
+
+message EncryptRequest {
+  string token = 1;
+}
+
+message EncryptResponse {
+  string token = 1;
+}
