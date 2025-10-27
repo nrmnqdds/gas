@@ -21,6 +21,26 @@ log = "0.4"
 env_logger = "0.11"
 console = "0.16.1"
 dotenvy = "0.15"
+rusty_paseto = { version = "0.8.0", features = ["batteries_included"]}
+aes-gcm = "0.10.3"
+hex = "0.4.3"
 
 [build-dependencies]
 tonic-prost-build = "*"
+
+[profile.release]
+# Enable maximum optimizations
+opt-level = 3
+lto = "fat"       # Link-time optimization
+codegen-units = 1 # Better optimization at cost of compile time
+panic = "abort"   # Smaller binary, faster execution
+
+[profile.release.package."*"]
+opt-level = 3
+
+# For development, keep debug symbols but optimize
+[profile.dev]
+debug = true
+opt-level = 1 # Basic optimizations in dev mode
+
+

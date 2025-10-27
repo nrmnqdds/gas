@@ -20,6 +20,7 @@ COPY --from=builder /usr/src/app/target/release/gas ./
 ENV HOSTNAME=0.0.0.0
 ENV RUST_LOG=info
 ENV OUT_DIR=./
+ENV FORCE_COLOR=1
 
 EXPOSE 50052
 
